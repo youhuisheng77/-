@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高会敏感词检测器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #e2e2fe 0%, #c9c8fb 50%, #a3a2ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(#7f77dd);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .contact-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .contact-info p {
+            margin: 0;
+            font-size: 1em;
+            opacity: 1;
+        }
+
+        .contact-info strong {
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section h2 {
+            color: #6b46c1;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            background: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #8b5cf6, #a855f7);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #c084fc, #d946ef);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(192, 132, 252, 0.4);
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #8b5cf6;
+        }
+
+        .result-section h2 {
+            color: #6b46c1;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .result-text {
+            line-height: 1.8;
+            font-size: 16px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            min-height: 100px;
+        }
+
+        .sensitive-word {
+            background: linear-gradient(45deg, #8b5cf6, #a855f7);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin: 0 2px;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+            animation: highlight 0.5s ease;
+        }
+
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .word-list {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .word-list h3 {
+            color: #6b46c1;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .word-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .word-tag {
+            background: #8b5cf6;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 40px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                flex: none;
+                width: 100%;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+
+            .stat-item {
+                min-width: auto;
+            }
+
+            .contact-info {
+                margin-top: 15px;
+                padding: 12px;
+            }
+
+            .contact-info p {
+                font-size: 0.9em;
+                line-height: 1.4;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>高会敏感词检测器</h1>
+            <p>输入文本，自动识别和标注敏感词汇</p>
+            <div class="contact-info">
+                <p>有任何建议或敏感词投稿，请发送邮件到：<strong>youhuisheng77@gmail.com</strong></p>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <h2>输入文本</h2>
+                <textarea id="inputText" placeholder="请在这里输入要检测的文本内容..."></textarea>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="detectSensitiveWords()">开始检测</button>
+                    <button class="btn-secondary" onclick="clearAll()">清空内容</button>
+                </div>
+            </div>
+
+            <div class="result-section" id="resultSection" style="display: none;">
+                <h2>检测结果</h2>
+                <div class="result-text" id="resultText"></div>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalWords">0</div>
+                        <div class="stat-label">总字数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="sensitiveCount">0</div>
+                        <div class="stat-label">敏感词数</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="sensitiveRatio">0%</div>
+                        <div class="stat-label">敏感词比例</div>
+                    </div>
+                </div>
+
+                <div class="word-list" id="wordList" style="display: none;">
+                    <h3>检测到的敏感词</h3>
+                    <div class="word-tags" id="wordTags"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 敏感词列表
+        const sensitiveWords = [
+            '奶', '操', '撸', '考', '靠', '猪', '鼠', '鸡', '鸭', '狗', '牛', '贱',
+            '壁虎', '狼狈', '灿烂', '疯', '死', '害', '憨', '讨厌', '公交车',
+            '打', '骂', '码', '逼', '屁', '亲', '油', '战场', '脑袋', '糊', '病毒', 
+            '下楼', '解散', '丑', '热辣滚烫', '时完', '犯规', '恋爱', '妈妈', '稀里糊涂', 
+            '滚', '大头', '叔叔', '偷', '爬', '健', '皇', '懒', '疫情', '唯六', '可恶', 
+            '发货', '歧视', '胖', '矮', '素', '兼', '丢', '吐', '烂', '寡', '恶意', 
+            '丰年', '完年', '吸血鬼', '茶', '雕', '尖', '见', '史', '屎', '口', '四', '死', '4', '勾', '种', '利用', '干嘛', '粉丝',
+            '加油', '偷' , '叫', '表', '疯', '件', '剑', '建', '贱', '装', '芒果', '东西', '脏', '樟树', '困', '含', '彩票',
+            '学校', '床', '学习', '草', '梧桐', '裹', '螺', '杯', '脑子', '东西', '有了', '私', '斯', '丝', '撕', '塑', '装',
+            '短', '猫猫', '愁', '臭', '破', ' 驴', '杂', '贩', '笨', '撸', '傻', '日', '大脑'
+
+            ]
+
+        function detectSensitiveWords() {
+            const inputText = document.getElementById('inputText').value.trim();
+            
+            if (!inputText) {
+                alert('请输入要检测的文本！');
+                return;
+            }
+
+            let resultText = inputText;
+            const foundWords = new Set();
+            
+            // 按照词长度降序排列，优先匹配长词
+            const sortedWords = [...sensitiveWords].sort((a, b) => b.length - a.length);
+            
+            // 替换敏感词
+            sortedWords.forEach(word => {
+                const regex = new RegExp(word, 'g');
+                if (regex.test(resultText)) {
+                    foundWords.add(word);
+                    resultText = resultText.replace(regex, `<span class="sensitive-word">${word}</span>`);
+                }
+            });
+
+            // 显示结果
+            document.getElementById('resultText').innerHTML = resultText;
+            document.getElementById('resultSection').style.display = 'block';
+            
+            // 更新统计信息
+            updateStats(inputText, foundWords);
+            
+            // 显示发现的敏感词
+            displayFoundWords(foundWords);
+            
+            // 滚动到结果区域
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateStats(text, foundWords) {
+            const totalWords = text.length;
+            const sensitiveCount = foundWords.size;
+            const sensitiveRatio = totalWords > 0 ? ((sensitiveCount / totalWords) * 100).toFixed(1) : 0;
+            
+            document.getElementById('totalWords').textContent = totalWords;
+            document.getElementById('sensitiveCount').textContent = sensitiveCount;
+            document.getElementById('sensitiveRatio').textContent = sensitiveRatio + '%';
+        }
+
+        function displayFoundWords(foundWords) {
+            const wordList = document.getElementById('wordList');
+            const wordTags = document.getElementById('wordTags');
+            
+            if (foundWords.size > 0) {
+                wordTags.innerHTML = '';
+                foundWords.forEach(word => {
+                    const tag = document.createElement('span');
+                    tag.className = 'word-tag';
+                    tag.textContent = word;
+                    wordTags.appendChild(tag);
+                });
+                wordList.style.display = 'block';
+            } else {
+                wordList.style.display = 'none';
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('inputText').focus();
+        }
+
+        // 页面加载完成后聚焦到输入框
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('inputText').focus();
+        });
+
+        // 支持快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                detectSensitiveWords();
+            }
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                clearAll();
+            }
+        });
+    </script>
+</body>
+</html>
